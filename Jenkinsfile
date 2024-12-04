@@ -64,5 +64,35 @@ pipeline {
                 }
             }
         }
+        stage('Build Docker Image and TAG') {
+            steps {
+                script {
+                    // Build the Docker image using the renamed JAR file
+                    withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
+                    sh "docker build -t ${DOCKER_IMAGE} --build-arg JAR_FILE=target/app-${env.BUILD_NUMBER}.jar ."
+                    }
+                }   
+            }
+        }
+        stage('Docker Image Scan') {
+            steps {
+                sh 'trivy image --format table -o trivy-image-report.html ${DOCKER_IMAGE}'
+            }
+        }
+        stage('Archive Report') {
+            steps {
+                // Archive the Trivy report for later reference
+                archiveArtifacts artifacts: 'trivy-image-report.html', fingerprint: true
+            }
+        }
+        stage('Push Docker Image') {
+            steps {
+                script {
+                    withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
+                        sh 'docker push ${DOCKER_IMAGE}'
+                    }
+                }
+            }
+        }
     }
 }
