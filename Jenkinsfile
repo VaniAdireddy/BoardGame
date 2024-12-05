@@ -85,10 +85,8 @@ pipeline {
         }
         stage('Push Docker Image') {
             steps {
-                script {
-                    withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
+                script { 
                         sh 'docker push ${DOCKER_IMAGE}'
-                    }
                 }
             }
         }
